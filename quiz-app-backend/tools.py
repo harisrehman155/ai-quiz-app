@@ -7,6 +7,7 @@ load_dotenv()
 
 tavily_client = AsyncTavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 
+
 @function_tool
 async def tavily_search(query: str):
     """

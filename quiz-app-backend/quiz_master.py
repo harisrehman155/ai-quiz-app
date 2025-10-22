@@ -11,7 +11,7 @@ external_client: AsyncOpenAI = AsyncOpenAI(
 
 # 2. Which LLM Model?
 llm_model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
-    model="gemini-1.5-flash", openai_client=external_client
+    model="gemini-2.5-pro", openai_client=external_client
 )
 
 # New, detailed prompt for generating a raw JSON string
