@@ -1,7 +1,7 @@
 import os
 from agents import Agent, AsyncOpenAI, OpenAIChatCompletionsModel
 from models import Quiz
-from tools import tavily_search
+from tools import web_search
 
 # 1. Which LLM Service?
 external_client: AsyncOpenAI = AsyncOpenAI(
@@ -11,7 +11,7 @@ external_client: AsyncOpenAI = AsyncOpenAI(
 
 # 2. Which LLM Model?
 llm_model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
-    model="gemini-2.5-pro", openai_client=external_client
+    model="gemini-2.5-flash-lite", openai_client=external_client
 )
 
 # New, detailed prompt for generating a raw JSON string
@@ -36,6 +36,6 @@ Each option object within the "options" list must contain the following keys:
 quiz_master_agent = Agent(
     name="QuizMaster",
     instructions=json_prompt,
-    tools=[tavily_search],
+    tools=[web_search],
     model=llm_model,
 )
