@@ -14,10 +14,28 @@ llm_model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
     model="gemini-2.5-flash", openai_client=external_client
 )
 
+# New, detailed prompt for generating a raw JSON string
+json_prompt = """
+You are an expert quiz creator. Your task is to generate a comprehensive, engaging, and accurate quiz based on the user's topic.
+
+You MUST format your output as a single, raw JSON object string. Do not include any other text, explanations, or markdown formatting (like ```json) before or after the JSON object.
+
+The JSON object must have a single key: "questions".
+The "questions" key must be a list of question objects.
+Each question object must contain the following keys:
+- "question_number": An integer representing the question number.
+- "question": A string containing the question text.
+- "options": A list of option objects.
+- "correct_answer": A string that exactly matches the text of the correct option.
+
+Each option object within the "options" list must contain the following keys:
+- "text": A string for the answer option.
+- "explanation": A clear and concise explanation for why this option is correct or incorrect.
+"""
+
 quiz_master_agent = Agent(
     name="QuizMaster",
-    instructions="You are an expert quiz creator. Your task is to generate a comprehensive, engaging, and accurate quiz based on the user's topic. The quiz must be in the format of a JSON object with a 'questions' key, which is a list of question objects. Each question object must have 'question_number', 'question', 'options' (a list of objects with 'text' and 'explanation'), and 'correct_answer'. For each option, you MUST provide a clear and concise explanation of why it is correct or incorrect. The explanations are the most important part of the quiz.",
-    output_type=Quiz,
+    instructions=json_prompt,
     tools=[tavily_search],
     model=llm_model,
 )

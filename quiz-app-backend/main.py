@@ -1,7 +1,9 @@
 import os
+import json
 from typing import List
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import ValidationError
 from agents import Runner
 from models import QuizGenerationRequest, Quiz, Question
 from quiz_master import quiz_master_agent
@@ -37,9 +39,24 @@ async def generate_quiz(request: QuizGenerationRequest):
             prompt += f" Use the following URL as a primary source: {request.source_url}"
 
         result = await Runner.run(quiz_master_agent, prompt)
-        quiz_output = result.final_output_as(Quiz)
+
+        # Manually parse the JSON string from the agent's final output
+        json_string = result.final_output
+
+        # Clean the string if it's wrapped in markdown
+        if json_string.startswith("```json"):
+            json_string = json_string[7:-4]
+
+        data = json.loads(json_string)
+
+        # Validate the data with the Pydantic model
+        quiz_output = Quiz(**data)
+
         return quiz_output.questions
 
+    except (json.JSONDecodeError, ValidationError) as e:
+        print(f"Error parsing or validating quiz JSON: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate a valid quiz structure.")
     except Exception as e:
-        print(f"Error generating quiz: {e}")
-        raise HTTPException(status_code=500, detail="An error occurred while generating the quiz.")
+        print(f"An unexpected error occurred: {e}")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred while generating the quiz.")
