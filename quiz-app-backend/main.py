@@ -28,7 +28,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 @app.post("/api/generate-quiz", response_model=List[Question])
 async def generate_quiz(request: QuizGenerationRequest):
     """
@@ -37,9 +36,7 @@ async def generate_quiz(request: QuizGenerationRequest):
     try:
         prompt = f"Generate a {request.num_questions}-question, {request.question_type} quiz about {request.topic}."
         if request.source_url:
-            prompt += (
-                f" Use the following URL as a primary source: {request.source_url}"
-            )
+            prompt += f" Use the following URL as a primary source: {request.source_url}"
 
         result = await Runner.run(quiz_master_agent, prompt)
 
@@ -50,7 +47,6 @@ async def generate_quiz(request: QuizGenerationRequest):
         # Clean the string if it's wrapped in markdown
         if json_string.startswith("```json"):
             json_string = json_string[7:-4]
-            # print(f"\n\n[Debug Main 2]: {json_string} \n\n")
 
         # print(f"\n\n[Debug Main 3]: {json_string}\n\n")
         data = json.loads(json_string)
@@ -62,12 +58,7 @@ async def generate_quiz(request: QuizGenerationRequest):
 
     except (json.JSONDecodeError, ValidationError) as e:
         print(f"Error parsing or validating quiz JSON: {e}")
-        raise HTTPException(
-            status_code=500, detail="Failed to generate a valid quiz structure."
-        )
+        raise HTTPException(status_code=500, detail="Failed to generate a valid quiz structure.")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="An unexpected error occurred while generating the quiz.",
-        )
+        raise HTTPException(status_code=500, detail="An unexpected error occurred while generating the quiz.")
