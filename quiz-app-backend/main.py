@@ -41,12 +41,13 @@ async def generate_quiz(request: QuizGenerationRequest):
         result = await Runner.run(quiz_master_agent, prompt)
 
         # Manually parse the JSON string from the agent's final output
-        json_string = result.final_output
+        json_string = result.final_output.strip()
 
         # Clean the string if it's wrapped in markdown
         if json_string.startswith("```json"):
             json_string = json_string[7:-4]
 
+        print(f"\n\n[Debug]: {json_string}\n\n")
         data = json.loads(json_string)
 
         # Validate the data with the Pydantic model
