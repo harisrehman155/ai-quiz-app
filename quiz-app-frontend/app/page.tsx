@@ -3,7 +3,6 @@
 import { useState } from "react";
 import QuizForm from "@/components/QuizForm";
 import QuestionCard from "@/components/QuestionCard";
-import ScoreSummary from "@/components/ScoreSummary";
 import { Question } from "@/types/quiz";
 import { generateQuiz } from "@/services/api";
 
@@ -16,11 +15,11 @@ export default function Home() {
   const [score, setScore] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  const handleStartQuiz = async (topic: string, numQuestions: number) => {
+  const handleStartQuiz = async (topic: string, numQuestions: number, sourceUrl: string) => {
     setStatus("loading");
     setError(null);
     try {
-      const quizData = await generateQuiz(topic, numQuestions);
+      const quizData = await generateQuiz(topic, numQuestions, sourceUrl);
       if (quizData.length === 0) {
         throw new Error("The generated quiz has no questions.");
       }
@@ -52,7 +51,7 @@ export default function Home() {
   };
 
   const renderContent = () => {
-    if (status === "active") {
+    if (status === "active" || status === "completed") {
       return (
         <QuestionCard
           question={quiz[currentQuestionIndex]}
@@ -62,23 +61,12 @@ export default function Home() {
         />
       );
     }
-    if (status === "completed") {
-      return (
-        <ScoreSummary
-          score={score}
-          totalQuestions={quiz.length}
-          onPlayAgain={handlePlayAgain}
-        />
-      );
-    }
     return <QuizForm onStartQuiz={handleStartQuiz} isLoading={status === "loading"} />;
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-24">
-      <h1 className="text-4xl md:text-5xl font-bold mb-8 text-white text-center">AI Quiz Generator</h1>
-
-      {status === 'loading' && <div className="text-white text-2xl">Loading Quiz...</div>}
+    <main className="min-h-screen">
+      {status === 'loading' && <div className="flex items-center justify-center h-screen text-white text-2xl">Loading Quiz...</div>}
 
       {renderContent()}
 

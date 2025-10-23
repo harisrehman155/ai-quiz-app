@@ -1,6 +1,6 @@
 import { Quiz } from "@/types/quiz";
 
-export const generateQuiz = async (topic: string, num_questions: number): Promise<Quiz> => {
+export const generateQuiz = async (topic: string, num_questions: number, source_url: string): Promise<Quiz> => {
   const response = await fetch("http://localhost:8000/api/generate-quiz", {
     method: "POST",
     headers: {
@@ -9,6 +9,7 @@ export const generateQuiz = async (topic: string, num_questions: number): Promis
     body: JSON.stringify({
       topic,
       num_questions,
+      source_url,
       question_type: "multiple-choice",
     }),
   });

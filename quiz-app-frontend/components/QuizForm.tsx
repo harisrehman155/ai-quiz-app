@@ -3,69 +3,77 @@
 import { useState } from "react";
 
 interface QuizFormProps {
-  onStartQuiz: (topic: string, numQuestions: number) => void;
+  onStartQuiz: (topic: string, numQuestions: number, sourceUrl: string) => void;
   isLoading: boolean;
 }
 
 export default function QuizForm({ onStartQuiz, isLoading }: QuizFormProps) {
   const [topic, setTopic] = useState("");
-  const [numQuestions, setNumQuestions] = useState(5);
+  const [numQuestions, setNumQuestions] = useState(10);
+  const [sourceUrl, setSourceUrl] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!topic.trim()) {
-      alert("Please enter a topic.");
+    if (!topic.trim() && !sourceUrl.trim()) {
+      alert("Please enter a topic or provide a source URL.");
       return;
     }
-    onStartQuiz(topic, numQuestions);
+    onStartQuiz(topic, numQuestions, sourceUrl);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-md bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20 shadow-lg">
-      <h2 className="text-2xl font-bold mb-6 text-center text-white">Create Your Quiz</h2>
-      <div className="mb-4">
-        <label htmlFor="topic" className="block text-gray-300 mb-2">
-          Topic
-        </label>
-        <input
-          id="topic"
-          type="text"
-          value={topic}
-          onChange={(e) => setTopic(e.target.value)}
-          placeholder="e.g., The History of Ancient Rome"
-          className="w-full px-4 py-2 rounded bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-teal-500"
-          disabled={isLoading}
-        />
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 sm:p-6 md:p-8 bg-gray-900 bg-opacity-50 backdrop-blur-lg">
+      <div className="w-full max-w-2xl text-center">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
+          AI Quiz Generator
+        </h1>
+        <p className="text-lg sm:text-xl text-gray-300 mb-8">
+          Enter a topic or paste a URL to generate a quiz.
+        </p>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <textarea
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            placeholder="e.g., The Renaissance period, quantum physics, etc."
+            className="w-full px-4 py-3 rounded-lg bg-gray-800 bg-opacity-50 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 resize-none shadow-lg"
+            rows={4}
+            disabled={isLoading}
+          />
+          <input
+            type="url"
+            value={sourceUrl}
+            onChange={(e) => setSourceUrl(e.target.value)}
+            placeholder="Or paste a URL..."
+            className="w-full px-4 py-3 rounded-lg bg-gray-800 bg-opacity-50 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 shadow-lg"
+            disabled={isLoading}
+          />
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="w-full sm:w-auto flex-grow">
+              <label htmlFor="numQuestions" className="sr-only">
+                Number of Questions
+              </label>
+              <select
+                id="numQuestions"
+                value={numQuestions}
+                onChange={(e) => setNumQuestions(Number(e.target.value))}
+                className="w-full px-4 py-3 rounded-lg bg-gray-800 bg-opacity-50 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 shadow-lg"
+                disabled={isLoading}
+              >
+                <option value={5}>5 Questions</option>
+                <option value={10}>10 Questions</option>
+                <option value={15}>15 Questions</option>
+              </select>
+            </div>
+            <button
+              type="submit"
+              className="w-full sm:w-auto bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition duration-300 disabled:bg-gray-500 disabled:cursor-not-allowed shadow-lg shadow-blue-500/50"
+              disabled={isLoading}
+            >
+              {isLoading ? "Generating..." : "Generate Quiz"}
+            </button>
+          </div>
+        </form>
       </div>
-      <div className="mb-6">
-        <label htmlFor="numQuestions" className="block text-gray-300 mb-2">
-          Number of Questions
-        </label>
-        <select
-          id="numQuestions"
-          value={numQuestions}
-          onChange={(e) => setNumQuestions(Number(e.target.value))}
-          className="w-full px-4 py-2 rounded bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-            backgroundPosition: 'right 0.5rem center',
-            backgroundRepeat: 'no-repeat',
-            backgroundSize: '1.5em 1.5em',
-          }}
-          disabled={isLoading}
-        >
-          <option className="bg-gray-800" value={5}>5</option>
-          <option className="bg-gray-800" value={10}>10</option>
-          <option className="bg-gray-800" value={15}>15</option>
-        </select>
-      </div>
-      <button
-        type="submit"
-        className="w-full bg-teal-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-600 transition duration-300 disabled:bg-teal-500/50"
-        disabled={isLoading}
-      >
-        {isLoading ? "Generating..." : "Start Quiz"}
-      </button>
-    </form>
+    </div>
   );
 }

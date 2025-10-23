@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Question, Option } from "@/types/quiz";
+import Header from "./Header";
 
 interface QuestionCardProps {
   question: Question;
@@ -30,60 +31,76 @@ export default function QuestionCard({
     setIsAnswered(true);
   };
 
-  const getButtonClass = (option: Option) => {
-    let classes = "bg-white/5 border border-white/20 hover:bg-white/10";
-    if (!isAnswered) {
-      return classes;
-    }
-
-    const isCorrect = option.text === question.correct_answer;
-    const isSelected = selectedOption?.text === option.text;
-
-    if (isCorrect) {
-      return "bg-teal-500/50 border-teal-500";
-    }
-    if (isSelected && !isCorrect) {
-      return "bg-red-500/50 border-red-500";
-    }
-    return "bg-white/5 border-white/20 opacity-50";
-  };
+  const isCorrect = selectedOption?.text === question.correct_answer;
 
   return (
-    <div className="w-full max-w-2xl bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20 shadow-lg">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-white">{`Question ${question.question_number}`}</h2>
-        <span className="text-lg font-semibold text-gray-400">
-          {currentQuestion} / {totalQuestions}
-        </span>
-      </div>
-      <p className="text-xl mb-6 text-gray-300">{question.question}</p>
+    <div className="w-full min-h-screen flex flex-col bg-gray-900 bg-opacity-50 backdrop-blur-lg">
+      <Header
+        title="AI Communication Exam L1: Part 2"
+        currentQuestion={currentQuestion}
+        totalQuestions={totalQuestions}
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {question.options.map((option, index) => (
-          <button
-            key={index}
-            onClick={() => handleOptionClick(option)}
-            className={`text-left p-4 rounded-xl transition duration-300 ${getButtonClass(option)}`}
-            disabled={isAnswered}
-          >
-            <p className="font-semibold text-white">{option.text}</p>
-            {isAnswered && (
-              <p className="text-sm mt-2 text-gray-200">{option.explanation}</p>
-            )}
-          </button>
-        ))}
-      </div>
+      {/* Main Content */}
+      <div className="flex-grow flex flex-col items-center justify-center p-4 sm:p-6 md:p-8">
+        <div className="w-full max-w-3xl">
+          <p className="text-xl sm:text-2xl font-semibold text-gray-200 mb-8 text-center">
+            {question.question}
+          </p>
+          <div className="space-y-4">
+            {question.options.map((option, index) => {
+              const isSelected = selectedOption?.text === option.text;
+              const isTheCorrectAnswer = option.text === question.correct_answer;
 
-      {isAnswered && (
-        <div className="text-right mt-6">
-          <button
-            onClick={() => onNextQuestion(selectedOption?.text === question.correct_answer)}
-            className="bg-teal-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-600 transition duration-300"
-          >
-            Next Question
-          </button>
+              let buttonClass = "w-full text-left p-4 rounded-lg transition-all duration-300 bg-gray-800 bg-opacity-50 border border-gray-700 hover:bg-gray-700 hover:border-blue-500 shadow-lg";
+
+              if (isAnswered) {
+                if (isTheCorrectAnswer) {
+                  buttonClass += " border-green-500 bg-green-500/20 ring-2 ring-green-500 shadow-green-500/50";
+                } else if (isSelected) {
+                  buttonClass += " border-red-500 bg-red-500/20 ring-2 ring-red-500 shadow-red-500/50";
+                }
+              }
+
+              return (
+                <button
+                  key={index}
+                  onClick={() => handleOptionClick(option)}
+                  className={buttonClass}
+                  disabled={isAnswered}
+                >
+                  <span className="font-bold mr-2">{String.fromCharCode(65 + index)}</span>
+                  {option.text}
+                </button>
+              );
+            })}
+          </div>
+
+          {isAnswered && (
+            <div className={`mt-6 p-4 rounded-lg bg-opacity-50 backdrop-blur-md ${isCorrect ? 'bg-green-500/20 border border-green-500' : 'bg-red-500/20 border border-red-500'}`}>
+              <h3 className="font-bold text-lg mb-2">{isCorrect ? "That's right!" : "Not quite..."}</h3>
+              <p className="text-gray-300">{selectedOption?.explanation}</p>
+            </div>
+          )}
         </div>
-      )}
+      </div>
+
+      {/* Footer */}
+      <div className="w-full max-w-3xl mx-auto py-4 flex justify-between items-center px-4 sm:px-6 md:px-8">
+        <button
+          className="bg-gray-700 bg-opacity-50 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300 border border-gray-600 shadow-md"
+          onClick={() => { /* Implement back functionality if needed */ }}
+        >
+          Back
+        </button>
+        <button
+          onClick={() => onNextQuestion(isCorrect)}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300 shadow-lg shadow-blue-500/50 disabled:bg-gray-500 disabled:shadow-none"
+          disabled={!isAnswered}
+        >
+          {currentQuestion === totalQuestions ? "Done" : "Next"}
+        </button>
+      </div>
     </div>
   );
 }

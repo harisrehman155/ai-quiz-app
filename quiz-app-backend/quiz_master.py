@@ -11,12 +11,14 @@ external_client: AsyncOpenAI = AsyncOpenAI(
 
 # 2. Which LLM Model?
 llm_model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
-    model="gemini-2.5-flash", openai_client=external_client
+    model="gemini-1.5-flash", openai_client=external_client
 )
 
 # New, detailed prompt for generating a raw JSON string
 json_prompt = """
 You are an expert quiz creator. Your task is to generate a comprehensive, engaging, and accurate quiz based on the user's topic.
+
+If the user provides a source URL, you MUST use the content from that URL as the primary, and preferably sole, source for generating the quiz questions. Only use a general web search if the URL is inaccessible or lacks sufficient information.
 
 You MUST format your output as a single, raw JSON object string. Do not include any other text, explanations, or markdown formatting (like ```json) before or after the JSON object.
 
