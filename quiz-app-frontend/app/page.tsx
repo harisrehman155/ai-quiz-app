@@ -52,46 +52,47 @@ export default function Home() {
   };
 
   const renderContent = () => {
-    switch (status) {
-      case "loading":
-        return <div className="text-white text-2xl">Loading Quiz...</div>;
-      case "active":
-        return (
-          <QuestionCard
-            question={quiz[currentQuestionIndex]}
-            onNextQuestion={handleNextQuestion}
-          />
-        );
-      case "completed":
-        return (
-          <ScoreSummary
-            score={score}
-            totalQuestions={quiz.length}
-            onPlayAgain={handlePlayAgain}
-          />
-        );
-      case "error":
-        return (
-          <div className="text-center">
-            <p className="text-red-500 text-xl mb-4">{error}</p>
-            <button
-              onClick={handlePlayAgain}
-              className="bg-blue-600 text-white py-2 px-6 rounded hover:bg-blue-700 transition"
-            >
-              Try Again
-            </button>
-          </div>
-        );
-      case "idle":
-      default:
-        return <QuizForm onStartQuiz={handleStartQuiz} isLoading={status === "loading"} />;
+    if (status === "active") {
+      return (
+        <QuestionCard
+          question={quiz[currentQuestionIndex]}
+          onNextQuestion={handleNextQuestion}
+          currentQuestion={currentQuestionIndex + 1}
+          totalQuestions={quiz.length}
+        />
+      );
     }
+    if (status === "completed") {
+      return (
+        <ScoreSummary
+          score={score}
+          totalQuestions={quiz.length}
+          onPlayAgain={handlePlayAgain}
+        />
+      );
+    }
+    return <QuizForm onStartQuiz={handleStartQuiz} isLoading={status === "loading"} />;
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-24 bg-gray-900">
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-24">
       <h1 className="text-4xl md:text-5xl font-bold mb-8 text-white text-center">AI Quiz Generator</h1>
+
+      {status === 'loading' && <div className="text-white text-2xl">Loading Quiz...</div>}
+
       {renderContent()}
+
+      {status === 'error' && (
+        <div className="text-center mt-4">
+          <p className="text-red-500 text-xl mb-4">{error}</p>
+          <button
+            onClick={handlePlayAgain}
+            className="bg-teal-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-600 transition"
+          >
+            Try Again
+          </button>
+        </div>
+      )}
     </main>
   );
 }
