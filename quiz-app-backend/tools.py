@@ -18,7 +18,7 @@ async def tavily_search(query: str):
     results = response["results"]
 
     filtered_results = []
-    for item in results[:5]:
+    for item in results:
         filtered_results.append(
             {
                 "title": item.get("title", ""),
