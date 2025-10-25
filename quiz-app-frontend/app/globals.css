@@ -3,8 +3,9 @@
 @tailwind utilities;
 
 body {
-  background-color: #1f2937;
-  color: white;
+  /* A very dark charcoal/off-black background to match the reference image */
+  background-color: #0d1117;
+  color: #e6edf3;
 }
 
 @layer utilities {
