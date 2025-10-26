@@ -7,6 +7,7 @@ from pydantic import ValidationError
 from agents import Runner
 from models import QuizGenerationRequest, Quiz, Question
 from quiz_master import quiz_master_agent
+from prompt_crafter import prompt_crafter_agent, prompt_crafter_instructions
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -32,16 +33,23 @@ app.add_middleware(
 @app.post("/api/generate-quiz", response_model=List[Question])
 async def generate_quiz(request: QuizGenerationRequest):
     """
-    Generates a quiz based on the user's topic and specifications.
+    Generates a quiz based on the user's topic and specifications using a two-agent chain.
     """
     try:
-        prompt = f"Generate a {request.num_questions}-question, {request.question_type} quiz about {request.topic}."
-        if request.source_url:
-            prompt += (
-                f" Use the following URL as a primary source: {request.source_url}"
-            )
+        # Step 1: Format the initial user request for the PromptCrafter agent
+        initial_prompt_for_crafter = prompt_crafter_instructions.format(
+            topic=request.topic,
+            num_questions=request.num_questions,
+            question_type=request.question_type,
+            source_url=request.source_url or "N/A",
+        )
 
-        result = await Runner.run(quiz_master_agent, prompt)
+        # Step 2: Run the PromptCrafter agent to generate the detailed prompt
+        crafted_prompt_result = await Runner.run(prompt_crafter_agent, initial_prompt_for_crafter)
+        crafted_prompt = crafted_prompt_result.final_output.strip()
+
+        # Step 3: Run the QuizMaster agent with the enhanced prompt
+        result = await Runner.run(quiz_master_agent, crafted_prompt)
 
         # Manually parse the JSON string from the agent's final output
         json_string = result.final_output.strip()
@@ -50,7 +58,6 @@ async def generate_quiz(request: QuizGenerationRequest):
         if json_string.startswith("```json"):
             json_string = json_string[7:-4]
 
-        # print(f"\n\n[Debug]: {json_string}\n\n")
         data = json.loads(json_string)
 
         # Validate the data with the Pydantic model

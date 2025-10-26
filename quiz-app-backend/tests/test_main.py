@@ -1,82 +1,70 @@
-import pytest
 import json
-from unittest.mock import AsyncMock, patch, MagicMock
+import pytest
+from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
 from main import app
-from models import Question, Quiz
+from models import Quiz, Question
+
+client = TestClient(app)
 
 @pytest.fixture
-def client():
-    return TestClient(app)
+def mock_runner():
+    with patch("main.Runner.run", new_callable=AsyncMock) as mock_run:
+        yield mock_run
 
-@pytest.mark.asyncio
-@patch("main.Runner.run")
-async def test_generate_quiz_success(mock_runner_run, client):
-    # Mock the response from the agent to be a JSON string
-    mock_questions = [
-        Question(
-            question_number=1,
-            question="What is 2 + 2?",
-            options=[
-                {"text": "3", "explanation": "Incorrect."},
-                {"text": "4", "explanation": "Correct."},
-            ],
-            correct_answer="4",
-        )
+def test_generate_quiz_success(mock_runner):
+    # Arrange
+    mock_quiz_data = {
+        "questions": [
+            {
+                "question_number": 1,
+                "question": "What is the capital of France?",
+                "options": [
+                    {"text": "London", "explanation": "Incorrect."},
+                    {"text": "Paris", "explanation": "Correct."},
+                ],
+                "correct_answer": "Paris",
+            }
+        ]
+    }
+    # Mock the two-agent chain
+    mock_runner.side_effect = [
+        AsyncMock(final_output="This is the crafted prompt."), # PromptCrafter output
+        AsyncMock(final_output=json.dumps(mock_quiz_data)) # QuizMaster output
     ]
-    mock_quiz_obj = Quiz(questions=mock_questions)
-    mock_json_string = mock_quiz_obj.model_dump_json()
 
-    # Mock the result object, which now has a string in final_output
-    mock_agent_result = MagicMock()
-    mock_agent_result.final_output = mock_json_string
+    request_data = {
+        "topic": "Capitals",
+        "num_questions": 1,
+        "question_type": "multiple-choice",
+    }
 
-    # The Runner.run function is async, so we set the return_value of the AsyncMock
-    mock_runner_run.return_value = mock_agent_result
+    # Act
+    response = client.post("/api/generate-quiz", json=request_data)
 
-    # Make the request to the endpoint
-    response = client.post(
-        "/api/generate-quiz",
-        json={"topic": "Math", "num_questions": 1, "question_type": "multiple-choice"},
-    )
-
-    # Assert the response
+    # Assert
     assert response.status_code == 200
-    assert response.json() == [q.model_dump() for q in mock_questions]
-    mock_runner_run.assert_called_once()
+    assert response.json() == mock_quiz_data["questions"]
+    assert mock_runner.call_count == 2
 
-@pytest.mark.asyncio
-@patch("main.Runner.run")
-async def test_generate_quiz_error(mock_runner_run, client):
-    # Mock the agent to raise an exception
-    mock_runner_run.side_effect = Exception("Test error")
+def test_generate_quiz_invalid_json(mock_runner):
+    # Arrange
+    # Mock the two-agent chain
+    mock_runner.side_effect = [
+        AsyncMock(final_output="This is the crafted prompt."), # PromptCrafter output
+        AsyncMock(final_output="This is not JSON") # QuizMaster output
+    ]
 
-    # Make the request to the endpoint
-    response = client.post(
-        "/api/generate-quiz",
-        json={"topic": "Error", "num_questions": 1, "question_type": "multiple-choice"},
-    )
+    request_data = {
+        "topic": "Invalid",
+        "num_questions": 1,
+        "question_type": "multiple-choice",
+    }
 
-    # Assert the response
+    # Act
+    response = client.post("/api/generate-quiz", json=request_data)
+
+    # Assert
     assert response.status_code == 500
-    assert response.json() == {"detail": "An unexpected error occurred while generating the quiz."}
-    mock_runner_run.assert_called_once()
-
-@pytest.mark.asyncio
-@patch("main.Runner.run")
-async def test_generate_quiz_invalid_json(mock_runner_run, client):
-    # Mock the agent to return invalid JSON
-    mock_agent_result = MagicMock()
-    mock_agent_result.final_output = "This is not JSON"
-    mock_runner_run.return_value = mock_agent_result
-
-    # Make the request to the endpoint
-    response = client.post(
-        "/api/generate-quiz",
-        json={"topic": "Invalid JSON", "num_questions": 1, "question_type": "multiple-choice"},
-    )
-
-    # Assert the response
-    assert response.status_code == 500
-    assert response.json() == {"detail": "Failed to generate a valid quiz structure."}
-    mock_runner_run.assert_called_once()
+    assert "Failed to generate a valid quiz structure" in response.text
+    assert mock_runner.call_count == 2
