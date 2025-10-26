@@ -26,4 +26,6 @@ async def tavily_search(query: str):
                 "content": item.get("content", ""),
             }
         )
+
+    # Convert the filtered results list to JSON string
     return json.dumps(filtered_results)

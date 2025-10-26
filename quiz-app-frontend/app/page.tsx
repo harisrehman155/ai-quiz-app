@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Loader from "@/components/Loader";
 import QuizForm from "@/components/QuizForm";
 import QuestionCard from "@/components/QuestionCard";
 import ProgressBar from "@/components/ProgressBar";
@@ -75,6 +76,8 @@ export default function Home() {
   };
 
   const renderContent = () => {
+    if (status === "loading") return null;
+
     if (status === "active" || status === "completed") {
       const questionStates = quiz.map((_, index) => {
         if (index === currentQuestionIndex) return 'active';
@@ -109,11 +112,8 @@ export default function Home() {
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-4">
+      {status === 'loading' && <Loader />}
       <div className="w-full max-w-2xl mx-auto">
-        {status === 'loading' && (
-          <div className="text-center text-white text-2xl">Loading Quiz...</div>
-        )}
-
         {renderContent()}
 
         {status === 'error' && (

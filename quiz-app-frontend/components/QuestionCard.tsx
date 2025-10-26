@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { Question, Option } from "@/types/quiz";
 import Header from "./Header";
+import { CheckIcon, XIcon } from "./Icons"; // Import the new icons
 
 type OptionState = 'default' | 'selected' | 'correct' | 'incorrect';
 
 interface QuestionCardProps {
-  question?: Question; // Make question optional for the completed state
+  question?: Question;
   userAnswer?: string;
   onNextQuestion: (selectedOption: string) => void;
   onBackQuestion: () => void;
@@ -29,15 +30,12 @@ export default function QuestionCard({
   status,
   score,
 }: QuestionCardProps) {
-  // The local selected option is kept to provide immediate feedback
   const [localSelected, setLocalSelected] = useState<string | null>(null);
 
   useEffect(() => {
-    // Reset local selection when the question changes
     setLocalSelected(null);
   }, [question]);
 
-  // An answer is considered submitted if it exists in the parent state
   const isAnswered = userAnswer !== undefined;
 
   const handleOptionClick = (option: Option) => {
@@ -52,6 +50,9 @@ export default function QuestionCard({
   };
 
   const selectedAnswer = isAnswered ? userAnswer : localSelected;
+
+  // The "Next" button should be disabled only when a user has not yet selected an answer.
+  const isNextDisabled = !selectedAnswer;
 
   return (
     <div className="bg-[#1e293b] border border-gray-700 rounded-2xl shadow-2xl overflow-hidden">
@@ -85,7 +86,7 @@ export default function QuestionCard({
                 const isCorrectAnswer = option.text === question.correct_answer;
                 const isSelected = selectedAnswer === option.text;
 
-            let optionState: OptionState = 'default';
+                let optionState: OptionState = 'default';
                 if (isAnswered) {
                   if (isCorrectAnswer) optionState = 'correct';
                   else if (isSelected) optionState = 'incorrect';
@@ -94,37 +95,39 @@ export default function QuestionCard({
                 }
 
                 const stateStyles = {
-                  default: 'border-gray-600 bg-gray-700 hover:bg-gray-600',
-                  selected: 'border-blue-400 bg-blue-500/50',
-                  correct: 'border-green-500 bg-green-500/20',
-                  incorrect: 'border-red-500 bg-red-500/20',
+                  default: 'border-gray-600 bg-gray-800 hover:bg-gray-700',
+                  selected: 'border-blue-500 bg-blue-900/50 ring-2 ring-blue-500',
+                  correct: 'border-green-500 bg-green-900/30 text-white',
+                  incorrect: 'border-red-500 bg-red-900/30 text-white',
                 };
 
+                const showExplanation = (optionState === 'correct' || (optionState === 'incorrect' && isSelected));
+
                 return (
-                  <div key={index}>
+                  <div key={index} className="rounded-lg">
                     <button
                       onClick={() => handleOptionClick(option)}
-                      className={`w-full text-left p-4 rounded-lg border transition-colors flex justify-between items-start ${stateStyles[optionState]}`}
+                      className={`w-full text-left p-4 rounded-lg border-2 transition-colors flex justify-between items-start ${stateStyles[optionState]}`}
                       disabled={isAnswered}
                     >
-                      <div>
-                        <span className="font-semibold mr-3">{String.fromCharCode(65 + index)}.</span>
-                        {option.text}
+                      <div className="flex items-start">
+                        <span className="font-semibold mr-4 text-gray-400">{String.fromCharCode(65 + index)}.</span>
+                        <p className="text-gray-200">{option.text}</p>
                       </div>
                     </button>
-                    {(optionState === 'correct' || optionState === 'incorrect') && (
-                      <div className="mt-2 pl-4">
-                        <div className="flex items-start gap-2 text-sm">
-                          {optionState === 'correct' ? (
-                            <div className="w-5 h-5 bg-green-500 rounded-full mt-1 flex-shrink-0"></div> // Checkmark Placeholder
+                    {showExplanation && (
+                      <div className="px-4 py-3">
+                        <div className="flex items-start gap-3">
+                           {optionState === 'correct' ? (
+                            <CheckIcon className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                           ) : (
-                            <div className="w-5 h-5 bg-red-500 rounded-full mt-1 flex-shrink-0"></div> // X Placeholder
+                            <XIcon className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
                           )}
                           <div>
-                            <p className={`font-semibold ${optionState === 'correct' ? 'text-green-400' : 'text-red-400'}`}>
+                            <p className={`font-semibold text-base ${optionState === 'correct' ? 'text-green-400' : 'text-red-400'}`}>
                               {optionState === 'correct' ? 'Right answer' : 'Not quite'}
                             </p>
-                            <p className="text-gray-400">{option.explanation}</p>
+                            <p className="text-gray-400 text-sm mt-1">{option.explanation}</p>
                           </div>
                         </div>
                       </div>
@@ -138,7 +141,7 @@ export default function QuestionCard({
       </div>
 
       <div className={`px-6 md:px-8 py-4 bg-gray-900/50 border-t border-gray-700 flex ${status === 'completed' ? 'justify-end' : 'justify-between'} items-center`}>
-        {status !== 'completed' && (
+         {status !== 'completed' && (
           <>
             <button
               onClick={onBackQuestion}
@@ -149,8 +152,8 @@ export default function QuestionCard({
             </button>
             <button
               onClick={handleSubmit}
-              className="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed"
-              disabled={!localSelected || isAnswered}
+              className="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
+              disabled={isNextDisabled}
             >
               {currentQuestion === totalQuestions ? "Done" : "Next"}
             </button>
