@@ -46,6 +46,11 @@ export default function QuestionCard({
   const handleSubmit = () => {
     if (localSelected) {
       onNextQuestion(localSelected);
+      return;
+    }
+    if (isAnswered && userAnswer) {
+      // Move forward keeping the existing answer
+      onNextQuestion(userAnswer);
     }
   };
 

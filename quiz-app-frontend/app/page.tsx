@@ -14,20 +14,19 @@ export default function Home() {
   const [status, setStatus] = useState<Status>("idle");
   const [quiz, setQuiz] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   const [score, setScore] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const handleStartQuiz = async (topic: string, numQuestions: number, sourceUrl: string) => {
     setStatus("loading");
     setError(null);
-    setUserAnswers({});
     try {
       const quizData = await generateQuiz(topic, numQuestions, sourceUrl);
       if (quizData.length === 0) {
         throw new Error("The generated quiz has no questions.");
       }
-      setQuiz(quizData);
+      // Ensure any previous user_answer fields are cleared
+      setQuiz(quizData.map(q => ({ ...q, user_answer: undefined })));
       setCurrentQuestionIndex(0);
       setScore(0);
       setStatus("active");
@@ -38,14 +37,20 @@ export default function Home() {
   };
 
   const handleNextQuestion = (selectedOption: string) => {
-    const isCorrect = selectedOption === quiz[currentQuestionIndex].correct_answer;
+    const current = quiz[currentQuestionIndex];
+    const alreadyAnswered = current.user_answer !== undefined;
+    const isCorrect = selectedOption === current.correct_answer;
 
-    // Only calculate score the first time an answer is submitted
-    if (!userAnswers[currentQuestionIndex]) {
-      if (isCorrect) {
-        setScore((prevScore) => prevScore + 1);
-      }
-      setUserAnswers((prev) => ({ ...prev, [currentQuestionIndex]: selectedOption }));
+    // Persist selection directly on the question in the quiz array
+    setQuiz((prev) =>
+      prev.map((q, idx) =>
+        idx === currentQuestionIndex ? { ...q, user_answer: selectedOption } : q
+      )
+    );
+
+    // Only calculate score the first time an answer is submitted for this question
+    if (!alreadyAnswered && isCorrect) {
+      setScore((prevScore) => prevScore + 1);
     }
 
     const nextIndex = currentQuestionIndex + 1;
@@ -63,7 +68,7 @@ export default function Home() {
 
   const handleSegmentClick = (index: number) => {
     // Allow navigation only to answered questions
-    if (userAnswers.hasOwnProperty(index)) {
+    if (quiz[index]?.user_answer !== undefined) {
       setCurrentQuestionIndex(index);
     }
   };
@@ -79,9 +84,9 @@ export default function Home() {
     if (status === "loading") return null;
 
     if (status === "active" || status === "completed") {
-      const questionStates = quiz.map((_, index) => {
+      const questionStates = quiz.map((q, index) => {
         if (index === currentQuestionIndex) return 'active';
-        if (userAnswers.hasOwnProperty(index)) return 'answered';
+        if (q.user_answer !== undefined) return 'answered';
         return 'unanswered';
       });
 
@@ -95,7 +100,7 @@ export default function Home() {
           />
           <QuestionCard
             question={quiz[currentQuestionIndex]}
-            userAnswer={userAnswers[currentQuestionIndex]}
+            userAnswer={quiz[currentQuestionIndex]?.user_answer}
             onNextQuestion={handleNextQuestion}
             onBackQuestion={handleBackQuestion}
             onPlayAgain={handlePlayAgain}
