@@ -1,6 +1,11 @@
-import { Quiz } from "@/types/quiz";
+import { Question } from "@/types/quiz";
 
-export const generateQuiz = async (topic: string, num_questions: number, source_url: string): Promise<Quiz> => {
+export const generateQuiz = async (
+  topic: string,
+  num_questions: number,
+  source_url: string,
+  complexity: "easy" | "medium" | "hard"
+): Promise<Question[]> => {
   const response = await fetch("http://localhost:8000/api/generate-quiz", {
     method: "POST",
     headers: {
@@ -11,13 +16,14 @@ export const generateQuiz = async (topic: string, num_questions: number, source_
       num_questions,
       source_url,
       question_type: "multiple-choice",
+      complexity,
     }),
   });
 
   if (!response.ok) {
-    throw new Error("Failed to generate quiz");
+    const errorData = await response.json();
+    throw new Error(errorData.detail || "Failed to generate quiz");
   }
 
-  const data = await response.json();
-  return data;
+  return await response.json();
 };

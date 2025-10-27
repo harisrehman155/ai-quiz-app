@@ -37,6 +37,7 @@ def test_generate_quiz_success(mock_runner):
         "topic": "Capitals",
         "num_questions": 1,
         "question_type": "multiple-choice",
+        "complexity": "easy",
     }
 
     # Act
@@ -59,6 +60,7 @@ def test_generate_quiz_invalid_json(mock_runner):
         "topic": "Invalid",
         "num_questions": 1,
         "question_type": "multiple-choice",
+        "complexity": "medium",
     }
 
     # Act

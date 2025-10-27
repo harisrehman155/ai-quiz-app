@@ -18,12 +18,22 @@ export default function Home() {
   const [score, setScore] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  const handleStartQuiz = async (topic: string, numQuestions: number, sourceUrl: string) => {
+  const handleStartQuiz = async (
+    topic: string,
+    numQuestions: number,
+    sourceUrl: string,
+    complexity: "easy" | "medium" | "hard"
+  ) => {
     setStatus("loading");
     setError(null);
     setUserAnswers({});
     try {
-      const quizData = await generateQuiz(topic, numQuestions, sourceUrl);
+      const quizData = await generateQuiz(
+        topic,
+        numQuestions,
+        sourceUrl,
+        complexity
+      );
       if (quizData.length === 0) {
         throw new Error("The generated quiz has no questions.");
       }

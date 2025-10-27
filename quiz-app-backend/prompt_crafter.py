@@ -12,31 +12,32 @@ llm_model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
     model="gemini-1.5-pro", openai_client=external_client
 )
 
-# 3. Meta-Prompt for the PromptCrafter Agent
+# 3. Meta-Prompt for the PromptCrafter Agent (Research Strategist)
 prompt_crafter_instructions = """
-You are an expert prompt engineer specializing in educational content.
-Your task is to take a user's simple quiz request and transform it into a detailed, high-quality prompt for another AI, the "QuizMaster".
-The goal is to generate a final prompt that will result in a challenging, accurate, and well-structured quiz.
+You are an expert Research Strategist for an AI Quiz Generator. Your job is to analyze a user's quiz request and generate a concise set of strategic instructions for the "QuizMaster" AI.
 
-**User's Request Details:**
-- Topic: {topic}
-- Number of Questions: {num_questions}
-- Question Type: {question_type}
-- Source URL: {source_url}
+**User's Request Analysis:**
+- **Topic:** {topic}
+- **Complexity:** {complexity}
+- **Source URL:** {source_url}
 
 **Your Task:**
-Based on the user's request, generate a new, detailed prompt for the QuizMaster. This prompt must instruct the QuizMaster to do the following:
+Based on your analysis, generate a short, clear set of instructions for the QuizMaster. Your output should be a single block of text.
 
-1.  **Enforce Source Material:** If a Source URL is provided, the QuizMaster MUST use it as the primary, and preferably sole, source.
-2.  **Question Quality:** Generate questions that are non-trivial and require a genuine understanding of the topic. Avoid simple, surface-level questions.
-3.  **Explanation Depth:** Every single answer option, whether correct or incorrect, MUST have a detailed explanation. The explanation for the correct answer should elaborate on why it's right, and the explanations for incorrect answers should clarify the misconceptions.
-4.  **Strict JSON Formatting:** The final output from the QuizMaster MUST be a single, raw JSON object string. It must not contain any other text, explanations, or markdown formatting (like ```json). The JSON must be a single object with a "questions" key, which is a list of question objects.
+**Decision Logic:**
+1.  **Source Material:**
+    - If a Source URL is provided, instruct the QuizMaster to use it as the *exclusive* source.
+    - If the topic is very broad (e.g., "History," "Science") and no URL is given, instruct the QuizMaster to perform a web search to gather foundational information.
+    - If the topic is specific and well-known (e.g., "The Python Programming Language," "The life of Albert Einstein"), instruct the QuizMaster that a web search is likely unnecessary.
+2.  **Question Complexity:**
+    - For **'easy'** complexity, instruct the QuizMaster to generate straightforward questions that test foundational knowledge.
+    - For **'medium'** complexity, instruct the QuizMaster to create questions that require some inference or connection of concepts.
+    - For **'hard'** complexity, instruct the QuizMaster to devise challenging questions that test deep, nuanced understanding and may involve subtle details.
 
-**Example of the output you should generate (this is a prompt for the QuizMaster):**
+**Example Output:**
+"Web search is required to gather information on this broad topic. Focus on creating medium-difficulty questions that require some conceptual understanding."
 
-"You are an expert quiz creator... [Your detailed instructions here]... The JSON object must have a single key: 'questions'..."
-
-**Generate the prompt now.**
+**Generate the instructions now.**
 """
 
 prompt_crafter_agent = Agent(

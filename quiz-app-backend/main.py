@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 from agents import Runner
 from models import QuizGenerationRequest, Quiz, Question
-from quiz_master import quiz_master_agent
+from quiz_master import quiz_master_agent, json_prompt_template
 from prompt_crafter import prompt_crafter_agent, prompt_crafter_instructions
 from dotenv import load_dotenv
 
@@ -33,23 +33,30 @@ app.add_middleware(
 @app.post("/api/generate-quiz", response_model=List[Question])
 async def generate_quiz(request: QuizGenerationRequest):
     """
-    Generates a quiz based on the user's topic and specifications using a two-agent chain.
+    Generates a quiz using a two-agent chain: a strategist and a creator.
     """
     try:
-        # Step 1: Format the initial user request for the PromptCrafter agent
-        initial_prompt_for_crafter = prompt_crafter_instructions.format(
+        # Step 1: Create the input for the PromptCrafter (strategist) agent
+        strategist_input = prompt_crafter_instructions.format(
             topic=request.topic,
-            num_questions=request.num_questions,
-            question_type=request.question_type,
+            complexity=request.complexity,
             source_url=request.source_url or "N/A",
         )
 
-        # Step 2: Run the PromptCrafter agent to generate the detailed prompt
-        crafted_prompt_result = await Runner.run(prompt_crafter_agent, initial_prompt_for_crafter)
-        crafted_prompt = crafted_prompt_result.final_output.strip()
+        # Step 2: Run the PromptCrafter to get dynamic instructions
+        strategist_result = await Runner.run(prompt_crafter_agent, strategist_input)
+        dynamic_instructions = strategist_result.final_output.strip()
 
-        # Step 3: Run the QuizMaster agent with the enhanced prompt
-        result = await Runner.run(quiz_master_agent, crafted_prompt)
+        # Step 3: Format the final prompt for the QuizMaster (creator) agent
+        final_prompt_for_quiz_master = json_prompt_template.format(
+            topic=request.topic,
+            num_questions=request.num_questions,
+            question_type=request.question_type,
+            dynamic_instructions=dynamic_instructions,
+        )
+
+        # Step 4: Run the QuizMaster agent with the complete, detailed prompt
+        result = await Runner.run(quiz_master_agent, final_prompt_for_quiz_master)
 
         # Manually parse the JSON string from the agent's final output
         json_string = result.final_output.strip()

@@ -3,7 +3,12 @@
 import { useState } from "react";
 
 interface QuizFormProps {
-  onStartQuiz: (topic: string, numQuestions: number, sourceUrl: string) => void;
+  onStartQuiz: (
+    topic: string,
+    numQuestions: number,
+    sourceUrl: string,
+    complexity: "easy" | "medium" | "hard"
+  ) => void;
   isLoading: boolean;
 }
 
@@ -11,6 +16,9 @@ export default function QuizForm({ onStartQuiz, isLoading }: QuizFormProps) {
   const [topic, setTopic] = useState("");
   const [numQuestions, setNumQuestions] = useState(10);
   const [sourceUrl, setSourceUrl] = useState("");
+  const [complexity, setComplexity] = useState<"easy" | "medium" | "hard">(
+    "easy"
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,7 +26,7 @@ export default function QuizForm({ onStartQuiz, isLoading }: QuizFormProps) {
       alert("Please enter a topic or provide a source URL.");
       return;
     }
-    onStartQuiz(topic, numQuestions, sourceUrl);
+    onStartQuiz(topic, numQuestions, sourceUrl, complexity);
   };
 
   return (
@@ -62,6 +70,24 @@ export default function QuizForm({ onStartQuiz, isLoading }: QuizFormProps) {
                 <option value={5}>5 Questions</option>
                 <option value={10}>10 Questions</option>
                 <option value={15}>15 Questions</option>
+              </select>
+            </div>
+            <div className="w-full sm:w-auto flex-grow">
+              <label htmlFor="complexity" className="sr-only">
+                Complexity
+              </label>
+              <select
+                id="complexity"
+                value={complexity}
+                onChange={(e) =>
+                  setComplexity(e.target.value as "easy" | "medium" | "hard")
+                }
+                className="w-full px-4 py-3 rounded-lg bg-gray-800 bg-opacity-50 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 shadow-lg"
+                disabled={isLoading}
+              >
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
               </select>
             </div>
             <button
